@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Email Sender</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #222632;
+            --border: #2e3348;
+            --text: #e4e6f0;
+            --text-muted: #8b8fa8;
+            --accent: #6c5ce7;
+            --accent-glow: rgba(108, 92, 231, 0.25);
+            --green: #00cec9;
+            --red: #ff6b6b;
+            --orange: #fdcb6e;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 36px;
+            padding-top: 20px;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe, #00cec9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #3e4460; }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-title .icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+        .icon-smtp { background: rgba(108,92,231,0.15); }
+        .icon-csv { background: rgba(0,206,201,0.15); }
+        .icon-compose { background: rgba(253,203,110,0.15); }
+
+        /* Form Elements */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-group:last-child { margin-bottom: 0; }
+
+        label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus, textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        textarea { resize: vertical; min-height: 140px; }
+
+        /* File Upload */
+        .file-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s, background 0.3s;
+            position: relative;
+        }
+        .file-upload-area:hover,
+        .file-upload-area.dragover {
+            border-color: var(--green);
+            background: rgba(0, 206, 201, 0.05);
+        }
+        .file-upload-area.has-file {
+            border-color: var(--green);
+            border-style: solid;
+            background: rgba(0, 206, 201, 0.05);
+        }
+        .file-upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .file-upload-icon { font-size: 2rem; margin-bottom: 8px; }
+        .file-upload-text { color: var(--text-muted); font-size: 0.9rem; }
+        .file-upload-text strong { color: var(--green); }
+        .file-name { color: var(--green); font-weight: 600; margin-top: 8px; font-size: 0.9rem; }
+
+        /* CSV Preview Table */
+        .csv-preview {
+            margin-top: 16px;
+            overflow-x: auto;
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .csv-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+        .csv-preview th {
+            background: var(--surface-2);
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+        }
+        .csv-preview td {
+            padding: 8px 14px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+        .csv-preview tr:hover td { background: var(--surface-2); }
+
+        /* Template hint */
+        .hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .hint-tag {
+            background: rgba(108,92,231,0.15);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.78rem;
+        }
+
+        /* Send Button */
+        .send-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.3s;
+            letter-spacing: 0.5px;
+        }
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+        .send-btn:active:not(:disabled) { transform: translateY(0); }
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Progress Panel */
+        .progress-panel {
+            display: none;
+        }
+        .progress-panel.active { display: block; }
+
+        .progress-bar-track {
+            width: 100%;
+            height: 8px;
+            background: var(--surface-2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6c5ce7, #00cec9);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .stat-badge {
+            flex: 1;
+            background: var(--surface-2);
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+        }
+        .stat-badge .num {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .stat-badge .lbl {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+        .stat-total .num { color: var(--text); }
+        .stat-sent .num { color: var(--green); }
+        .stat-failed .num { color: var(--red); }
+
+        /* Log */
+        .log-box {
+            background: var(--surface-2);
+            border-radius: 8px;
+            padding: 16px;
+            max-height: 250px;
+            overflow-y: auto;
+            font-size: 0.82rem;
+            line-height: 1.8;
+            color: var(--text-muted);
+        }
+        .log-box::-webkit-scrollbar { width: 6px; }
+        .log-box::-webkit-scrollbar-track { background: transparent; }
+        .log-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.5rem; }
+            body { padding: 16px; }
+            .card { padding: 20px; }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card { animation: fadeInUp 0.5s ease both; }
+        .card:nth-child(2) { animation-delay: 0.08s; }
+        .card:nth-child(3) { animation-delay: 0.16s; }
+        .card:nth-child(4) { animation-delay: 0.24s; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📧 Bulk Email Sender</h1>
+        <p>Upload a CSV, compose your message, and send individual emails to each recipient.</p>
+    </div>
+
+    <form id="emailForm" enctype="multipart/form-data">
+        <!-- SMTP Settings -->
+        <div class="card">
+            <div class="card-title">
+                <div class="icon icon-smtp">🔒</div>
+                SMTP Settings
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="smtp_server">SMTP Server</label>
+                    <input type="text" id="smtp_server" name="smtp_server" value="smtp.gmail.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="smtp_port">Port</label>
+                    <input type="number" id="smtp_port" name="smtp_port" value="587" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="sender_email">Your Email</label>
+                    <input type="email" id="sender_email" name="sender_email" placeholder="you@gmail.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="sender_password">App Password</label>
+                    <input type="password" id="sender_password" name="sender_password" placeholder="••••••••••••••••" required>
+                </div>
+            </div>
+        </div>
+
+        <!-- CSV Upload -->
+        <div class="card">
+            <div class="card-title">
+                <div class="icon icon-csv">📄</div>
+                Upload Contacts (CSV)
+            </div>
+            <div class="file-upload-area" id="dropZone">
+                <input type="file" id="csv_file" name="csv_file" accept=".csv" required>
+                <div class="file-upload-icon">⬆️</div>
+                <div class="file-upload-text">Drag & drop your <strong>.csv</strong> file here, or click to browse</div>
+                <div class="file-name" id="fileName" style="display:none;"></div>
+            </div>
+            <div class="hint" style="margin-top:10px;">
+                CSV must have a column header called <span class="hint-tag">email</span> — optional: <span class="hint-tag">name</span>
+            </div>
+            <div class="csv-preview" id="csvPreview" style="display:none;"></div>
+        </div>
+
+        <!-- Compose Email -->
+        <div class="card">
+            <div class="card-title">
+                <div class="icon icon-compose">✏️</div>
+                Compose Email
+            </div>
+            <div class="form-group">
+                <label for="subject">Subject</label>
+                <input type="text" id="subject" name="subject" placeholder="Enter email subject…" required>
+            </div>
+            <div class="form-group">
+                <label for="body">Body (HTML supported)</label>
+                <textarea id="body" name="body" placeholder="Hello {name},&#10;&#10;Write your message here..."></textarea>
+                <div class="hint">Use <span class="hint-tag">{name}</span> to personalize with the recipient's name from the CSV.</div>
+            </div>
+        </div>
+
+        <!-- Send Button -->
+        <button type="submit" class="send-btn" id="sendBtn">🚀 Send Emails</button>
+    </form>
+
+    <!-- Progress Panel -->
+    <div class="card progress-panel" id="progressPanel" style="margin-top: 20px;">
+        <div class="card-title">
+            <div class="icon icon-smtp">📊</div>
+            Sending Progress
+        </div>
+        <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+        <div class="stats-row">
+            <div class="stat-badge stat-total">
+                <div class="num" id="statTotal">0</div>
+                <div class="lbl">Total</div>
+            </div>
+            <div class="stat-badge stat-sent">
+                <div class="num" id="statSent">0</div>
+                <div class="lbl">Sent</div>
+            </div>
+            <div class="stat-badge stat-failed">
+                <div class="num" id="statFailed">0</div>
+                <div class="lbl">Failed</div>
+            </div>
+        </div>
+        <div class="log-box" id="logBox">Waiting to start…</div>
+    </div>
+</div>
+
+<script>
+    // --- CSV Preview ---
+    const csvInput = document.getElementById('csv_file');
+    const dropZone = document.getElementById('dropZone');
+    const fileName = document.getElementById('fileName');
+    const csvPreview = document.getElementById('csvPreview');
+
+    csvInput.addEventListener('change', handleFile);
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            csvInput.files = e.dataTransfer.files;
+            handleFile();
+        }
+    });
+
+    function handleFile() {
+        const file = csvInput.files[0];
+        if (!file) return;
+
+        fileName.textContent = file.name;
+        fileName.style.display = 'block';
+        dropZone.classList.add('has-file');
+        dropZone.querySelector('.file-upload-icon').textContent = '✅';
+        dropZone.querySelector('.file-upload-text').innerHTML = 'File selected:';
+
+        // Read and preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            const rows = text.trim().split('\n').map(r => r.split(','));
+            if (rows.length < 2) { csvPreview.style.display = 'none'; return; }
+
+            const headers = rows[0];
+            let html = '<table><thead><tr>';
+            headers.forEach(h => html += `<th>${h.trim()}</th>`);
+            html += '</tr></thead><tbody>';
+
+            const previewRows = rows.slice(1, 11); // Show max 10 rows
+            previewRows.forEach(row => {
+                html += '<tr>';
+                row.forEach(cell => html += `<td>${cell.trim()}</td>`);
+                html += '</tr>';
+            });
+            if (rows.length > 11) {
+                html += `<tr><td colspan="${headers.length}" style="text-align:center; color:var(--text-muted);">… and ${rows.length - 11} more rows</td></tr>`;
+            }
+            html += '</tbody></table>';
+            csvPreview.innerHTML = html;
+            csvPreview.style.display = 'block';
+        };
+        reader.readAsText(file);
+    }
+
+    // --- Form Submit ---
+    const form = document.getElementById('emailForm');
+    const sendBtn = document.getElementById('sendBtn');
+    const progressPanel = document.getElementById('progressPanel');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        sendBtn.disabled = true;
+        sendBtn.textContent = '⏳ Sending…';
+        progressPanel.classList.add('active');
+        document.getElementById('logBox').innerHTML = 'Starting…';
+
+        const formData = new FormData(form);
+        try {
+            const res = await fetch('/send', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.error || 'Something went wrong.');
+                sendBtn.disabled = false;
+                sendBtn.textContent = '🚀 Send Emails';
+                return;
+            }
+            // Start polling
+            pollStatus();
+        } catch (err) {
+            alert('Network error: ' + err.message);
+            sendBtn.disabled = false;
+            sendBtn.textContent = '🚀 Send Emails';
+        }
+    });
+
+    function pollStatus() {
+        const interval = setInterval(async () => {
+            try {
+                const res = await fetch('/status');
+                const data = await res.json();
+
+                document.getElementById('statTotal').textContent = data.total;
+                document.getElementById('statSent').textContent = data.sent;
+                document.getElementById('statFailed').textContent = data.failed;
+
+                const pct = data.total > 0 ? ((data.sent + data.failed) / data.total * 100) : 0;
+                document.getElementById('progressFill').style.width = pct + '%';
+
+                const logBox = document.getElementById('logBox');
+                logBox.innerHTML = data.log.join('<br>');
+                logBox.scrollTop = logBox.scrollHeight;
+
+                if (!data.running && (data.sent + data.failed) >= data.total && data.total > 0) {
+                    clearInterval(interval);
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = '🚀 Send Emails';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }, 1000);
+    }
+</script>
+</body>
+</html>
