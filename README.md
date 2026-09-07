@@ -49,7 +49,9 @@ A Flask-based web application for sending personalized, automated bulk emails vi
 ## CSV Format
 
 Your CSV file must include columns for the recipient's name and email address. The application is flexible and will look for any column containing the word "name" and "email" (case-insensitive).
-https://onedrive.live.com/personal/9121fa7260ec1e81/_layouts/15/doc2.aspx?resid=02cf6ef6-bf6d-4259-b4fe-465e57caa5d8&cid=9121fa7260ec1e81
+
+https://1drv.ms/x/c/9121fa7260ec1e81/IQD2bs8Cbb9ZQrT-Rl5XyqXYAWjJCiSsE6y2otdZamb64pc?e=vCoGMd
+
 Example `contacts.csv`:
 ```csv
 Name,Email
